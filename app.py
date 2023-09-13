@@ -218,3 +218,10 @@ elif (uploaded_file is None):
         st.table(cox_df)
         
 
+st.write('---')
+st.text('統計解析環境')
+st.text('Python ver 3.11.4')
+st.text('Numpy ver 1.25.2')
+st.text('lifelines ver 0.27.7')
+        
+
