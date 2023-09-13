@@ -128,7 +128,8 @@ st.text('列名をduration, event, subgroup(任意)としたexcelファイルを
 st.text('duration: イベントまでの期間 day, month, yearsいずれも可。')
 st.text('event: 観察期間中のイベントの有無。イベント発生が1、イベント未発生は0。')
 st.text('subgroup: 群間比較をしたいときはここにラベルを入れてください。')
-st.write("テンプレートExcel [link]('https://github.com/oceanvntp/KaplanMeier_curve_app/raw/main/sample_table/sampleExcel.xlsx)")
+st.write("テンプレートExcel [link](https://github.com/oceanvntp/KaplanMeier_curve_app/raw/main/sample_table/%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88.xlsx)")
+
 st.write('---')
 title = st.text_input('グラフタイトル',value='Kaplan Meier Curve')
 col1, col2 = st.columns(2)
