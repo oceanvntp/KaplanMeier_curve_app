@@ -128,7 +128,7 @@ uploaded_file = st.file_uploader("Excelファイルをアップロードして�
 st.text('列名をduration, event, subgroup(任意)としたexcelファイルをアップロードしてください。')
 st.text('duration: イベントまでの期間 day, month, yearsいずれも可。')
 st.text('event: 観察期間中のイベントの有無。イベント発生が1、イベント未発生は0。')
-st.text('subgroup: 群間比較をしたいときはここにラベルを入れてください。')
+st.text('subgroup: 群間比較をしたいときはここにラベルを入れてください。(現状ラベルがないとエラーが出ます。単群でも適当にラベルを入れてください。)')
 st.write("テンプレートExcel [link](https://github.com/oceanvntp/KaplanMeier_curve_app/raw/main/sample_table/%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88.xlsx)")
 
 st.write('---')
@@ -190,14 +190,15 @@ if uploaded_file is not None:
     fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
                   title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, ci=ci, at_risk=at_risk)
     st.pyplot(fig)
-    st.text('Logrank検定')
-    p_df = logrank_p_table(df)
-
-    st.table(p_df)
-    st.text('ハザード比(対象群/参照群)')
-    inverse = st.checkbox('対象, 参照反転')
-    cox_df = hazard_table(df, inverse=inverse)
-    st.table(cox_df)
+    subgroup = list(set(df.subgroup))
+    if len(subgroup) >= 2:
+        st.text('Logrank検定')
+        p_df = logrank_p_table(df)
+        st.table(p_df)
+        st.text('ハザード比(対象群/参照群)')
+        inverse = st.checkbox('対象, 参照反転')
+        cox_df = hazard_table(df, inverse=inverse)
+        st.table(cox_df)
 
 
 # ファイルが無いときはサンプルを表示できるように
