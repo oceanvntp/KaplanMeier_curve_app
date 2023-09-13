@@ -7,6 +7,7 @@ from itertools import combinations
 import matplotlib.pyplot as plt
 import japanize_matplotlib
 import streamlit as st 
+import sys
 
 ##################################
 # カプランマイヤー曲線表示関数
@@ -220,7 +221,7 @@ elif (uploaded_file is None):
 
 st.write('---')
 st.text('統計解析環境')
-st.text('Python ver 3.11.4')
+st.text(f'Python ver {sys.version}')
 st.text('Numpy ver 1.25.2')
 st.text('lifelines ver 0.27.7')
         
