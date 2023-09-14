@@ -108,6 +108,13 @@ def logrank_p_table(df):
     p_df = pd.DataFrame({'subgroup':names, 'p-value':ps})
     return p_df
 
+# p<0.05のとき色付け
+def heighlight_value(val):
+    if val < 0.05:
+        return 'background-color: lightcoral'
+    else:
+        return ''
+
 #-----------------------------------
 # ハザード比
 def hazard_table(df, inverse=False):
@@ -142,8 +149,10 @@ def hazard_table(df, inverse=False):
         hrs.append(hr)
         cis_low.append(ci_low)
         cis_high.append(ci_high)
-    df_cox = pd.DataFrame({'subgroup':names, 'HR':hrs, 
-                        '95% CI(lower)':cis_low,'95% CI(upper)':cis_high})
+    df_cox = pd.DataFrame({'subgroup':names, 
+                           'HR':hrs, 
+                            '95% CI(lower)':cis_low,
+                            '95% CI(upper)':cis_high})
     return df_cox
 
     
@@ -224,7 +233,7 @@ if uploaded_file is not None:
     if len(subgroup) >= 2:
         st.text('Logrank検定')
         p_df = logrank_p_table(df)
-        st.table(p_df)
+        st.table(p_df.style.applymap(heighlight_value, subset=['p-value']))
         st.text('ハザード比(対象群/参照群)')
         inverse = st.checkbox('対象, 参照反転')
         cox_df = hazard_table(df, inverse=inverse)
@@ -242,12 +251,12 @@ elif (uploaded_file is None):
                     title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, ci=ci, at_risk=at_risk)
         st.pyplot(fig)
         
-        st.text('生存期間')
+        st.text('●生存期間')
         st.table(median_duration(df))
-        st.text('Logrank検定')
+        st.text('●Logrank検定')
         p_df = logrank_p_table(df)
-        st.table(p_df)
-        st.text('ハザード比(対照群/参照群)')
+        st.table(p_df.style.applymap(heighlight_value, subset=['p-value']))
+        st.text('●ハザード比(対照群/参照群)')
         inverse = st.checkbox('対象, 参照反転')
         cox_df = hazard_table(df, inverse=inverse)
         st.table(cox_df)
