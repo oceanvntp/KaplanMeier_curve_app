@@ -3,6 +3,7 @@ import pandas as pd
 from lifelines import KaplanMeierFitter, CoxPHFitter
 from lifelines.plotting import add_at_risk_counts
 from lifelines.statistics import logrank_test
+from lifelines.utils import median_survival_times
 from itertools import combinations
 import matplotlib.pyplot as plt
 import japanize_matplotlib
@@ -24,7 +25,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
     fig, ax = plt.subplots(figsize=size, dpi=300)
     plt.suptitle(title)
     
-    kmfs = []
+    kmfs = [] # at_riskを正しく表示するため、fitしたインスタンスをリストに格納する
     if (len(subgroup) > 0) and by_subgroup: 
         for i, group in enumerate(subgroup):
             df_ = df[df.subgroup==group]
@@ -61,6 +62,33 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
    
         fig.tight_layout()
         return fig
+
+#-----------------------------------
+# 生存期間中央値、ci
+def median_duration(df):
+    subgroup = list(set(df.subgroup))
+    names, medians, cis_low, cis_high = [], [], [], []
+    for group in subgroup:
+        df_ = df[df.subgroup == group]
+        kmf = KaplanMeierFitter()
+        kmf.fit(durations=df_.duration, event_observed=df_.event)
+        mst = kmf.median_survival_time_
+        median_ci = median_survival_times(kmf.confidence_interval_)
+        ci_low = median_ci.iloc[0, 0]
+        ci_high = median_ci.iloc[0, 1]
+        
+        names.append(group)
+        medians.append(mst)
+        cis_low.append(ci_low)
+        cis_high.append(ci_high)
+    
+    df_survival = pd.DataFrame({
+        'subgroup':names,
+        'median survival time':medians,
+        '95% CI(lower)':cis_low,
+        '95% CI(upper)':cis_high
+    })
+    return df_survival
 
 #-----------------------------------
 # Logrank検定
@@ -190,6 +218,8 @@ if uploaded_file is not None:
     fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
                   title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, ci=ci, at_risk=at_risk)
     st.pyplot(fig)
+    st.text('生存期間')
+    st.table(median_duration(df))
     subgroup = list(set(df.subgroup))
     if len(subgroup) >= 2:
         st.text('Logrank検定')
@@ -204,13 +234,16 @@ if uploaded_file is not None:
 # ファイルが無いときはサンプルを表示できるように
 elif (uploaded_file is None):
     st.write('---')
-    st.text('下のボタンを押すとサンプルが表示されます。')
-    sample = st.button('サンプル表示')
+    st.text('チェックするとサンプルが表示されます。')
+    sample = st.checkbox('サンプル表示')
     if sample:
         df = pd.read_excel('sample_table/sampleExcel.xlsx', header=0)
         fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
                     title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, ci=ci, at_risk=at_risk)
         st.pyplot(fig)
+        
+        st.text('生存期間')
+        st.table(median_duration(df))
         st.text('Logrank検定')
         p_df = logrank_p_table(df)
         st.table(p_df)
@@ -222,8 +255,8 @@ elif (uploaded_file is None):
 
 st.write('---')
 st.text('統計解析環境')
-st.text(f'Python ver {sys.version}')
-st.text('Numpy ver 1.25.2')
-st.text('lifelines ver 0.27.7')
+st.text(f'Python ver: {sys.version}')
+st.text('Numpy ver: 1.25.2')
+st.text('lifelines ver: 0.27.7')
         
 
