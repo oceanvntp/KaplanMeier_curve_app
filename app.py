@@ -39,9 +39,11 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
                 event_observed = 1 - event_observed
             kmf.fit(durations=df_.duration, event_observed=event_observed, label=group)
             if color == 'gray':  
-                kmf.plot(show_censors=censor, ci_show=ci, color=color, linestyle=style_list[i])
+                kmf.plot(show_censors=censor, ci_show=ci, color=color, 
+                         linestyle=style_list[i], censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
             else:
-                kmf.plot(show_censors=censor, ci_show=ci, color=color[i])
+                kmf.plot(show_censors=censor, ci_show=ci, 
+                         color=color[i], censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
             kmfs.append(kmf)
         
         plt.xlabel(xlabel)
@@ -60,9 +62,11 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
             event_observed = 1 - event_observed
         kmf.fit(durations=df.duration, event_observed=event_observed)
         if color == 'gray': 
-            kmf.plot(show_censors=censor, ci_show=ci, color=color, label='_nolegend_')
+            kmf.plot(show_censors=censor, ci_show=ci, color=color, 
+                     label='_nolegend_', censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
         else:
-            kmf.plot(show_censors=censor, ci_show=ci, color=color[0], label='_nolegend_')
+            kmf.plot(show_censors=censor, ci_show=ci, color=color[0], 
+                     label='_nolegend_', censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
         
         plt.gca.legend_ = None
         plt.xlabel(xlabel)
