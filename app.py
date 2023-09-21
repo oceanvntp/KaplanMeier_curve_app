@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import japanize_matplotlib
 import streamlit as st 
 import sys
+from io import BytesIO
+import base64
 
 ##################################
 # カプランマイヤー曲線表示関数
@@ -155,6 +157,15 @@ def hazard_table(df, inverse=False):
                             '95% CI(upper)':cis_high})
     return df_cox
 
+#-----------------------------------
+#　画像ダウンロード
+def download_button(fig, filename):
+    buf = BytesIO()
+    fig.savefig(buf, format='png', dpi=300)
+    buf.seek(0)
+    b64 = base64.b64encode(buf.read()).decode()
+    href = f'<a href="data:file/png;base64,{b64}" download="{filename}.png">Download link: {filename} PNG(300 dpi)</a>'
+    return href
     
 ##################################
 #　本体
@@ -227,14 +238,17 @@ if uploaded_file is not None:
     fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
                   title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, ci=ci, at_risk=at_risk)
     st.pyplot(fig)
-    st.text('生存期間')
+    # if st.button('ダウンロード'):
+    st.markdown(download_button(fig, "km_curve"), unsafe_allow_html=True)
+    
+    st.text('●生存期間')
     st.table(median_duration(df))
     subgroup = list(set(df.subgroup))
     if len(subgroup) >= 2:
-        st.text('Logrank検定')
+        st.text('●Logrank検定')
         p_df = logrank_p_table(df)
         st.table(p_df.style.applymap(heighlight_value, subset=['p-value']))
-        st.text('ハザード比(対象群/参照群)')
+        st.text('●ハザード比(対象群/参照群)')
         inverse = st.checkbox('対象, 参照反転')
         cox_df = hazard_table(df, inverse=inverse)
         st.table(cox_df)
