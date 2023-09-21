@@ -12,8 +12,10 @@ import sys
 from io import BytesIO
 import base64
 
+
 ##################################
 # カプランマイヤー曲線表示関数
+
 style_list = ['solid', 'dashed', 'dashdot', 'dotted']
 grayscale = ['0.', '0.35', '0.7', '0.9']
 lancet_cp = ['#00468BFF', '#ED0000FF', '#42B540FF', '#0099B4FF']
@@ -21,7 +23,7 @@ nejm_cp = ['#BC3C29FF', '#0072B5FF', '#E18727FF', '#20854EFF']
 
 def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:bool=True, 
             title:str='Kaplan Meier Curve', xlabel:str='生存日数', ylabel='生存率', 
-            censor:bool=True, ci:bool=False, at_risk:bool=True):
+            censor:bool=True, ci:bool=False, at_risk:bool=True, event_flag=1):
     
     subgroup = list(set(df.subgroup))
     fig, ax = plt.subplots(figsize=size, dpi=300)
@@ -32,7 +34,10 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
         for i, group in enumerate(subgroup):
             df_ = df[df.subgroup==group]
             kmf = KaplanMeierFitter()
-            kmf.fit(durations=df_.duration, event_observed=df_.event, label=group)
+            event_observed = df_.event.values
+            if event_flag == 0:
+                event_observed = 1 - event_observed
+            kmf.fit(durations=df_.duration, event_observed=event_observed, label=group)
             if color == 'gray':  
                 kmf.plot(show_censors=censor, ci_show=ci, color=color, linestyle=style_list[i])
             else:
@@ -50,7 +55,10 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
     
     else:
         kmf = KaplanMeierFitter()
-        kmf.fit(durations=df.duration, event_observed=df.event)
+        event_observed = df.event.values
+        if event_flag == 0:
+            event_observed = 1 - event_observed
+        kmf.fit(durations=df.duration, event_observed=event_observed)
         if color == 'gray': 
             kmf.plot(show_censors=censor, ci_show=ci, color=color, label='_nolegend_')
         else:
@@ -65,15 +73,19 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
         fig.tight_layout()
         return fig
 
+
 #-----------------------------------
 # 生存期間中央値、ci
-def median_duration(df):
+def median_duration(df, event_flag=1):
     subgroup = list(set(df.subgroup))
     names, medians, cis_low, cis_high = [], [], [], []
     for group in subgroup:
         df_ = df[df.subgroup == group]
+        event_observed = df_.event.values
+        if event_flag == 0:
+            event_observed = 1 - event_observed
         kmf = KaplanMeierFitter()
-        kmf.fit(durations=df_.duration, event_observed=df_.event)
+        kmf.fit(durations=df_.duration, event_observed=event_observed)
         mst = kmf.median_survival_time_
         median_ci = median_survival_times(kmf.confidence_interval_)
         ci_low = median_ci.iloc[0, 0]
@@ -94,7 +106,7 @@ def median_duration(df):
 
 #-----------------------------------
 # Logrank検定
-def logrank_p_table(df):
+def logrank_p_table(df, event_flag=1):
     subgroup = list(set(df.subgroup))
     subgroup_combi = list(combinations(subgroup, 2))
 
@@ -103,7 +115,13 @@ def logrank_p_table(df):
     for combi in subgroup_combi:
         c1 = df[df['subgroup']==combi[0]]
         c2 = df[df['subgroup']==combi[1]]
-        logrank = logrank_test(c1.duration, c2.duration, c1.event, c2.event)
+        
+        event_observed_c1 = c1.event.values
+        event_observed_c2 = c2.event.values
+        if event_flag == 0:
+            event_observed_c1 = 1 - event_observed_c1
+            event_observed_c2 = 1 - event_observed_c2
+        logrank = logrank_test(c1.duration, c2.duration, event_observed_c1, event_observed_c2)
         p = logrank.p_value
         ps.append(p)
         names.append(combi[0]+'/'+combi[1])
@@ -119,7 +137,8 @@ def heighlight_value(val):
 
 #-----------------------------------
 # ハザード比
-def hazard_table(df, inverse=False):
+
+def hazard_table(df, inverse=False, event_flag=1):
     subgroup = list(set(df.subgroup))
     subgroup_combi = list(combinations(subgroup, 2))
     
@@ -131,10 +150,21 @@ def hazard_table(df, inverse=False):
     for combi in subgroup_combi:
         df_forcox = df[df['subgroup'].apply(lambda x: x in combi)]
         df_forcox['sub_label'] = df_forcox['subgroup'].apply(lambda x: combi.index(x) if x in combi else -1)
+        df_forcox['event_0'] = df_forcox['event'].apply(lambda x: 1-x)
+    
+        
         cph = CoxPHFitter()
         df_forcox = df_forcox.drop('subgroup', axis=1)
-        cph = cph.fit(df_forcox, 'duration', 'event')
+        if event_flag == 1:
+            df_forcox = df_forcox.drop('event_0', axis=1)
+            cph = cph.fit(df_forcox, 'duration', 'event')
+            
+        elif event_flag == 0:
+            df_forcox = df_forcox.drop('event', axis=1)
+            cph = cph.fit(df_forcox, 'duration', 'event_0')
+    
         hr = cph.hazard_ratios_.item()
+        
         ci_low = np.exp(cph.confidence_intervals_.iloc[0,0])
         ci_high = np.exp(cph.confidence_intervals_.iloc[0,1])
         name = combi[1]+'/'+combi[0]
@@ -159,6 +189,7 @@ def hazard_table(df, inverse=False):
 
 #-----------------------------------
 #　画像ダウンロード
+
 def download_button(fig, filename):
     buf = BytesIO()
     fig.savefig(buf, format='png', dpi=300)
@@ -173,11 +204,15 @@ st.title('カプランマイヤー曲線作成App')
 
 # Excelファイルのアップロード
 uploaded_file = st.file_uploader("Excelファイルをアップロードしてください", type=["xlsx", "xls"])
-st.text('列名をduration, event, subgroup(任意)としたexcelファイルをアップロードしてください。')
-st.text('duration: イベントまでの期間 day, month, yearsいずれも可。')
-st.text('event: 観察期間中のイベントの有無。イベント発生が1、イベント未発生は0。')
-st.text('subgroup: 群間比較をしたいときはここにラベルを入れてください。(現状ラベルがないとエラーが出ます。単群でも適当にラベルを入れてください。)')
+st.text('列名をduration, event, subgroupとしたexcelファイルをアップロードしてください。')
+st.text('※列名は必須です。その他の列は削除してください。')
 st.write("テンプレートExcel [link](https://github.com/oceanvntp/KaplanMeier_curve_app/raw/main/sample_table/%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88.xlsx)")
+st.write('  ')
+st.text('duration: イベントまでの期間 day, month, yearsいずれも可。')
+st.text('event: 観察期間中のイベントの有無(1 or 0)')
+st.text('subgroup: 群間比較をしたいときはここにラベルを入れてください。')
+st.text('          ※現状ラベルがないとエラーが出ます。単群でも適当にラベルを入れてください。')
+
 
 st.write('---')
 title = st.text_input('グラフタイトル',value='Kaplan Meier Curve')
@@ -201,9 +236,12 @@ elif style == 'Lancet':
     
 st.sidebar.write('---')
 st.sidebar.text('図表サイズ')
-size_x = st.sidebar.slider('横', min_value=5, max_value=10, value=8)
-size_y = st.sidebar.slider('縦', min_value=5, max_value=10, value=6)
+size_x = st.sidebar.slider('横', min_value=5, max_value=12, value=8)
+size_y = st.sidebar.slider('縦', min_value=5, max_value=12, value=6)
 size = (size_x, size_y)
+
+st.sidebar.write('---')
+event_flag = st.sidebar.selectbox('イベント発生', (1, 0))
 
 st.sidebar.write('---')
 by_sub = st.sidebar.selectbox('グループ', ('グループごと', '全体集団'))
@@ -211,6 +249,7 @@ if by_sub == 'グループごと':
     by_subgroup = True 
 elif by_sub == '全体集団':
     by_subgroup = False
+    
     
 st.sidebar.write('---')
 censor_flag = st.sidebar.selectbox('打ち切り表示', ('有', '無'))
@@ -236,21 +275,22 @@ at_risk = True if at_risk_=='有' else False
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file, header=0)
     fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
-                  title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, ci=ci, at_risk=at_risk)
+                  title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, 
+                  ci=ci, at_risk=at_risk, event_flag=event_flag)
     st.pyplot(fig)
     # if st.button('ダウンロード'):
     st.markdown(download_button(fig, "km_curve"), unsafe_allow_html=True)
     
     st.text('●生存期間')
-    st.table(median_duration(df))
+    st.table(median_duration(df, event_flag=event_flag))
     subgroup = list(set(df.subgroup))
     if len(subgroup) >= 2:
         st.text('●Logrank検定')
-        p_df = logrank_p_table(df)
+        p_df = logrank_p_table(df, event_flag=event_flag)
         st.table(p_df.style.applymap(heighlight_value, subset=['p-value']))
         st.text('●ハザード比(対象群/参照群)')
         inverse = st.checkbox('対象, 参照反転')
-        cox_df = hazard_table(df, inverse=inverse)
+        cox_df = hazard_table(df, inverse=inverse, event_flag=event_flag)
         st.table(cox_df)
 
 
@@ -262,17 +302,18 @@ elif (uploaded_file is None):
     if sample:
         df = pd.read_excel('sample_table/sampleExcel.xlsx', header=0)
         fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
-                    title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, ci=ci, at_risk=at_risk)
+                    title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, 
+                    ci=ci, at_risk=at_risk, event_flag=event_flag)
         st.pyplot(fig)
         
         st.text('●生存期間')
-        st.table(median_duration(df))
+        st.table(median_duration(df, event_flag=event_flag))
         st.text('●Logrank検定')
-        p_df = logrank_p_table(df)
+        p_df = logrank_p_table(df, event_flag=event_flag)
         st.table(p_df.style.applymap(heighlight_value, subset=['p-value']))
         st.text('●ハザード比(対照群/参照群)')
         inverse = st.checkbox('対象, 参照反転')
-        cox_df = hazard_table(df, inverse=inverse)
+        cox_df = hazard_table(df, inverse=inverse, event_flag=event_flag)
         st.table(cox_df)
         
 
