@@ -14,6 +14,10 @@ import base64
 
 
 ##################################
+##################################
+##################################
+
+
 # カプランマイヤー曲線表示関数
 
 style_list = ['solid', 'dashed', 'dashdot', 'dotted']
@@ -280,6 +284,7 @@ at_risk = True if at_risk_=='有' else False
 # ファイルアップロード後の処理
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file, header=0)
+    df = df.fillna({'subgroup':'None'})
     fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
                   title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, 
                   ci=ci, at_risk=at_risk, event_flag=event_flag)
