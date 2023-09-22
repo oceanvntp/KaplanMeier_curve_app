@@ -16,16 +16,27 @@ import base64
 ##################################
 ##################################
 ##################################
-
-
-# カプランマイヤー曲線表示関数
-
+# スタイル
 style_list = ['solid', 'dashed', 'dashdot', 'dotted']
-grayscale = ['0.', '0.3', '0.6', '0.8', '0.9']
+# grayscale = ['0.', '0.3', '0.6', '0.8', '0.9']
 lancet_cp = ['#00468BFF', '#ED0000FF', '#42B540FF', '#0099B4FF',
              '#925E9FFF', '#FDAF91FF', '#AD002AFF', '#ADB6B6FF']
 nejm_cp = ['#BC3C29FF', '#0072B5FF', '#E18727FF', '#20854EFF', 
            '#7876B1FF', '#6F99ADFF', '#FFDC91FF', '#EE4C97FF']
+
+def generate_grayscale(x):
+    if x <= 0:
+        return []
+
+    step = 0.8 / (x - 1)  # x個の等間隔な数値を生成するためのステップ
+    result = [round(i * step, 3) for i in range(x)]
+    result = [str(val) for val in result]  # 四捨五入した後に文字列に変換
+    return result
+
+# ----------------------------------------
+# カプランマイヤー曲線表示関数
+
+
 
 def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:bool=True, 
             title:str='Kaplan Meier Curve', xlabel:str='生存日数', ylabel='生存率', 
@@ -209,6 +220,10 @@ def download_button(fig, filename):
     return href
     
 ##################################
+##################################
+##################################
+##################################
+
 #　本体
 st.title('カプランマイヤー曲線作成App')
 
@@ -236,9 +251,21 @@ with col2:
 # サイドバー
 style = st.sidebar.selectbox('スタイル', ('グレースケール', 'グレー', 'NEJM', 'Lancet'))
 if style == 'グレースケール':
-    color = grayscale
+    if uploaded_file is not None:
+        df = pd.read_excel(uploaded_file, header=0)
+        df = df.fillna({'subgroup':'None'})
+        color = generate_grayscale(len(set(df.subgroup)))
+    else:
+        pass
 elif style == 'グレー':
-    color = 'gray'
+    if uploaded_file is not None:
+        df = pd.read_excel(uploaded_file, header=0)
+        df = df.fillna({'subgroup':'None'})
+        if len(set(df.subgroup)) > 4:
+            st.sidebar.write('このスタイルは4群まで対応しています。')
+        else:
+            color = 'gray'
+            
 elif style == 'NEJM':
     color = nejm_cp
 elif style == 'Lancet':
