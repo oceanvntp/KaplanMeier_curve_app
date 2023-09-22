@@ -17,9 +17,11 @@ import base64
 # カプランマイヤー曲線表示関数
 
 style_list = ['solid', 'dashed', 'dashdot', 'dotted']
-grayscale = ['0.', '0.35', '0.7', '0.9']
-lancet_cp = ['#00468BFF', '#ED0000FF', '#42B540FF', '#0099B4FF']
-nejm_cp = ['#BC3C29FF', '#0072B5FF', '#E18727FF', '#20854EFF']
+grayscale = ['0.', '0.3', '0.6', '0.8', '0.9']
+lancet_cp = ['#00468BFF', '#ED0000FF', '#42B540FF', '#0099B4FF',
+             '#925E9FFF', '#FDAF91FF', '#AD002AFF', '#ADB6B6FF']
+nejm_cp = ['#BC3C29FF', '#0072B5FF', '#E18727FF', '#20854EFF', 
+           '#7876B1FF', '#6F99ADFF', '#FFDC91FF', '#EE4C97FF']
 
 def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:bool=True, 
             title:str='Kaplan Meier Curve', xlabel:str='生存日数', ylabel='生存率', 
@@ -40,7 +42,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
             kmf.fit(durations=df_.duration, event_observed=event_observed, label=group)
             if color == 'gray':  
                 kmf.plot(show_censors=censor, ci_show=ci, color=color, 
-                         linestyle=style_list[i], censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
+                         linestyle=style_list[i], censor_styles={"marker": "|", "ms": 6, "mew": 0.75}) # matplotlibのマーカーと同じ。ms:長さ、mew:太さ
             else:
                 kmf.plot(show_censors=censor, ci_show=ci, 
                          color=color[i], censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
@@ -326,5 +328,3 @@ st.text('統計解析環境')
 st.text(f'Python ver: {sys.version}')
 st.text('Numpy ver: 1.25.2')
 st.text('lifelines ver: 0.27.7')
-        
-
