@@ -36,7 +36,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
     plt.suptitle(title)
     
     kmfs = [] # at_riskを正しく表示するため、fitしたインスタンスをリストに格納する
-    if (len(subgroup) > 0) and by_subgroup: 
+    if (len(subgroup) > 1) and by_subgroup: 
         for i, group in enumerate(subgroup):
             df_ = df[df.subgroup==group]
             kmf = KaplanMeierFitter()
