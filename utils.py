@@ -129,7 +129,8 @@ def logrank_p_table(df, event_flag=1):
     subgroup = list(set(df.subgroup))
     subgroup_combi = list(combinations(subgroup, 2))
 
-    ps = []
+    logrank_ps = []
+    wilcoxon_ps = []
     names = []
     for combi in subgroup_combi:
         c1 = df[df['subgroup']==combi[0]]
@@ -141,10 +142,14 @@ def logrank_p_table(df, event_flag=1):
             event_observed_c1 = 1 - event_observed_c1
             event_observed_c2 = 1 - event_observed_c2
         logrank = logrank_test(c1.duration, c2.duration, event_observed_c1, event_observed_c2)
-        p = logrank.p_value
-        ps.append(p)
+        wilcoxon = logrank_test(c1.duration, c2.duration, event_observed_c1, event_observed_c2, 
+                                weightings='wilcoxon')
+        logrank_p = logrank.p_value
+        wilcoxon_p = wilcoxon.p_value
+        logrank_ps.append(logrank_p)
+        wilcoxon_ps.append(wilcoxon_p)
         names.append(combi[0]+'/'+combi[1])
-    p_df = pd.DataFrame({'subgroup':names, 'p-value':ps})
+    p_df = pd.DataFrame({'subgroup':names, 'logrank-p':logrank_ps, 'wilcoxon-p':wilcoxon_ps})
     return p_df
 
 # p<0.05のとき色付け
@@ -216,3 +221,7 @@ def download_button(fig, filename):
     b64 = base64.b64encode(buf.read()).decode()
     href = f'<a href="data:file/png;base64,{b64}" download="{filename}.png">Download link: {filename} PNG(300 dpi)</a>'
     return href
+
+
+######
+#Wilcoxon検定

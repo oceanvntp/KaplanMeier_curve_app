@@ -61,7 +61,10 @@ if style == 'グレースケール':
         df = df.fillna({'subgroup':'None'})
         color = generate_grayscale(len(set(df.subgroup)))
     else:
-        pass
+        df = pd.read_excel('sample_table/sampleExcel.xlsx', header=0)
+        df = df.fillna({'subgroup':'None'})
+        color = generate_grayscale(len(set(df.subgroup)))
+        
 elif style == 'グレー':
     if uploaded_file is not None:
         df = pd.read_excel(uploaded_file, header=0)
@@ -132,9 +135,9 @@ if uploaded_file is not None:
     st.table(median_duration(df, event_flag=event_flag))
     subgroup = list(set(df.subgroup))
     if len(subgroup) >= 2:
-        st.text('●Logrank検定')
+        st.text('●Logrank/Wilcoxon検定')
         p_df = logrank_p_table(df, event_flag=event_flag)
-        st.table(p_df.style.applymap(heighlight_value, subset=['p-value']))
+        st.table(p_df.style.applymap(heighlight_value, subset=['logrank-p', 'wilcoxon-p']))
         st.text('●ハザード比(対象群/参照群)')
         inverse = st.checkbox('対象, 参照反転')
         cox_df = hazard_table(df, inverse=inverse, event_flag=event_flag)
@@ -155,9 +158,9 @@ elif (uploaded_file is None):
         
         st.text('●生存期間')
         st.table(median_duration(df, event_flag=event_flag))
-        st.text('●Logrank検定')
+        st.text('●Logrank/Wilcoxon検定')
         p_df = logrank_p_table(df, event_flag=event_flag)
-        st.table(p_df.style.applymap(heighlight_value, subset=['p-value']))
+        st.table(p_df.style.applymap(heighlight_value, subset=['logrank-p', 'wilcoxon-p']))
         st.text('●ハザード比(対照群/参照群)')
         inverse = st.checkbox('対象, 参照反転')
         cox_df = hazard_table(df, inverse=inverse, event_flag=event_flag)
