@@ -24,11 +24,11 @@ lancet_cp = ['#00468BFF', '#ED0000FF', '#42B540FF', '#0099B4FF',
 nejm_cp = ['#BC3C29FF', '#0072B5FF', '#E18727FF', '#20854EFF', 
            '#7876B1FF', '#6F99ADFF', '#FFDC91FF', '#EE4C97FF']
 
-def generate_grayscale(x):
+def generate_grayscale(x, white_value=0.8): #一番薄い色を変更するときはここ
     if x <= 0:
         return []
 
-    step = 0.8 / (x - 1)  # x個の等間隔な数値を生成するためのステップ
+    step = white_value / (x - 1)  # x個の等間隔な数値を生成するためのステップ
     result = [round(i * step, 3) for i in range(x)]
     result = [str(val) for val in result]  # 四捨五入した後に文字列に変換
     return result
@@ -311,6 +311,7 @@ at_risk = True if at_risk_=='有' else False
 # ファイルアップロード後の処理
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file, header=0)
+    df = df.dropna(subset=['duration', 'event'])
     df = df.fillna({'subgroup':'None'})
     fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
                   title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, 
