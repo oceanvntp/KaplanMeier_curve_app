@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from lifelines import KaplanMeierFitter, CoxPHFitter
 from lifelines.plotting import add_at_risk_counts
+# custom_lifelinesで数字を中央揃えにしようとすると, 群の名前の表示位置がずれる
 from lifelines.statistics import logrank_test
 from lifelines.utils import median_survival_times
 from itertools import combinations
@@ -38,7 +39,14 @@ def generate_grayscale(x, white_value=0.8): #一番薄い色を変更すると�
 
 def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:bool=True, 
             title:str='Kaplan Meier Curve', xlabel:str='生存日数', ylabel='生存率', 
-            censor:bool=True, ci:bool=False, at_risk:bool=True, event_flag=1):
+            censor:bool=True, ci:bool=False, at_risk:bool=True, event_flag=1,
+            fontsize=10, fontname='Arial'):
+    
+    '''
+    カプランマイヤー曲線描画関数
+    Args:
+        df: データ元のデータフレーム
+    '''
     
     subgroup = list(set(df.subgroup))
     fig, ax = plt.subplots(figsize=size, dpi=300)
@@ -64,7 +72,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         if at_risk:
-            add_at_risk_counts(*kmfs, rows_to_show=['At risk'])  # * でリストの中身を展開
+            add_at_risk_counts(*kmfs, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)  # * でリストの中身を展開
 
         fig.tight_layout()            
         return fig
@@ -87,7 +95,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)  
         if at_risk:
-            add_at_risk_counts(kmf, rows_to_show=['At risk'])
+            add_at_risk_counts(kmf, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)
    
         fig.tight_layout()
         return fig
@@ -223,5 +231,3 @@ def download_button(fig, filename):
     return href
 
 
-######
-#Wilcoxon検定

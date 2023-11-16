@@ -43,7 +43,7 @@ st.text('subgroup: 群間比較をしたいときはここにラベルを入れ�
 
 
 st.write('---')
-title = st.text_input('グラフタイトル',value='Kaplan Meier Curve')
+title = st.text_input('グラフタイトル',value='')
 col1, col2 = st.columns(2)
 with col1:
     xlabel = st.text_input('横軸のラベル', value='期間')
@@ -117,6 +117,13 @@ st.sidebar.write('---')
 at_risk_ = st.sidebar.selectbox('N at risk表示', ('有', '無'))
 at_risk = True if at_risk_=='有' else False
 
+#-----------------------------------  
+st.sidebar.write('---')
+fontsize = st.sidebar.slider('N at risk サイズ', min_value=8, max_value=14, value=11)
+#-----------------------------------   
+st.sidebar.write('---')
+fontname = st.sidebar.selectbox('N at risk　フォント', ('Arial', 'Times New Roman', 'Helvetica', 'Calibri'))
+
 
 ##################################
 # ファイルアップロード後の処理
@@ -126,7 +133,8 @@ if uploaded_file is not None:
     df = df.fillna({'subgroup':'None'})
     fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
                   title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, 
-                  ci=ci, at_risk=at_risk, event_flag=event_flag)
+                  ci=ci, at_risk=at_risk, event_flag=event_flag,
+                  fontsize=fontsize, fontname=fontname)
     st.pyplot(fig)
     # if st.button('ダウンロード'):
     st.markdown(download_button(fig, "km_curve"), unsafe_allow_html=True)
@@ -153,7 +161,8 @@ elif (uploaded_file is None):
         df = pd.read_excel('sample_table/sampleExcel.xlsx', header=0)
         fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
                     title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, 
-                    ci=ci, at_risk=at_risk, event_flag=event_flag)
+                    ci=ci, at_risk=at_risk, event_flag=event_flag,
+                    fontsize=fontsize, fontname=fontname)
         st.pyplot(fig)
         
         st.text('●生存期間')
