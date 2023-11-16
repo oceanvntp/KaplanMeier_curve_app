@@ -37,7 +37,8 @@ def generate_grayscale(x, white_value=0.8): #一番薄い色を変更すると�
 
 
 
-def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:bool=True, 
+def draw_km(df:pd.DataFrame, color:str or list='gray', 
+            linestyle_choice=False, style_choice_list=None, size=(8, 4), by_subgroup:bool=True, 
             title:str='Kaplan Meier Curve', xlabel:str='生存日数', ylabel='生存率', 
             censor:bool=True, ci:bool=False, at_risk:bool=True, event_flag=1,
             fontsize=10, fontname='Arial'):
@@ -53,52 +54,95 @@ def draw_km(df:pd.DataFrame, color:str or list='gray', size=(8, 4), by_subgroup:
     plt.suptitle(title)
     
     kmfs = [] # at_riskを正しく表示するため、fitしたインスタンスをリストに格納する
-    if (len(subgroup) > 1) and by_subgroup: 
-        for i, group in enumerate(subgroup):
-            df_ = df[df.subgroup==group]
+    if linestyle_choice:
+        if (len(subgroup) > 1) and by_subgroup: 
+            for i, group in enumerate(subgroup):
+                df_ = df[df.subgroup==group]
+                kmf = KaplanMeierFitter()
+                event_observed = df_.event.values
+                if event_flag == 0:
+                    event_observed = 1 - event_observed
+                kmf.fit(durations=df_.duration, event_observed=event_observed, label=group)
+                kmf.plot(show_censors=censor, ci_show=ci, 
+                        color=color[i], linestyle=style_choice_list[i],
+                        censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
+                kmfs.append(kmf)
+            
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)
+            if at_risk:
+                add_at_risk_counts(*kmfs, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)  # * でリストの中身を展開
+
+            fig.tight_layout()            
+            return fig
+                    
+        
+        else:
             kmf = KaplanMeierFitter()
-            event_observed = df_.event.values
+            event_observed = df.event.values
             if event_flag == 0:
                 event_observed = 1 - event_observed
-            kmf.fit(durations=df_.duration, event_observed=event_observed, label=group)
-            if color == 'gray':  
-                kmf.plot(show_censors=censor, ci_show=ci, color=color, 
-                         linestyle=style_list[i], censor_styles={"marker": "|", "ms": 6, "mew": 0.75}) # matplotlibのマーカーと同じ。ms:長さ、mew:太さ
-            else:
-                kmf.plot(show_censors=censor, ci_show=ci, 
-                         color=color[i], censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
-            kmfs.append(kmf)
+            kmf.fit(durations=df.duration, event_observed=event_observed)
+            kmf.plot(show_censors=censor, ci_show=ci, color=color[0], linestyle=style_choice_list[0],
+                    label='_nolegend_', censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
         
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        if at_risk:
-            add_at_risk_counts(*kmfs, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)  # * でリストの中身を展開
-
-        fig.tight_layout()            
-        return fig
-                
+            plt.gca.legend_ = None
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)  
+            if at_risk:
+                add_at_risk_counts(kmf, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)
+    
+            fig.tight_layout()
+            return fig
+        
     
     else:
-        kmf = KaplanMeierFitter()
-        event_observed = df.event.values
-        if event_flag == 0:
-            event_observed = 1 - event_observed
-        kmf.fit(durations=df.duration, event_observed=event_observed)
-        if color == 'gray': 
-            kmf.plot(show_censors=censor, ci_show=ci, color=color, 
-                     label='_nolegend_', censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
-        else:
-            kmf.plot(show_censors=censor, ci_show=ci, color=color[0], 
-                     label='_nolegend_', censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
+        if (len(subgroup) > 1) and by_subgroup: 
+            for i, group in enumerate(subgroup):
+                df_ = df[df.subgroup==group]
+                kmf = KaplanMeierFitter()
+                event_observed = df_.event.values
+                if event_flag == 0:
+                    event_observed = 1 - event_observed
+                kmf.fit(durations=df_.duration, event_observed=event_observed, label=group)
+                if color == 'gray':  
+                    kmf.plot(show_censors=censor, ci_show=ci, color=color, 
+                            linestyle=style_list[i], censor_styles={"marker": "|", "ms": 6, "mew": 0.75}) # matplotlibのマーカーと同じ。ms:長さ、mew:太さ
+                else:
+                    kmf.plot(show_censors=censor, ci_show=ci, 
+                            color=color[i], censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
+                kmfs.append(kmf)
+            
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)
+            if at_risk:
+                add_at_risk_counts(*kmfs, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)  # * でリストの中身を展開
+
+            fig.tight_layout()            
+            return fig
+                    
         
-        plt.gca.legend_ = None
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)  
-        if at_risk:
-            add_at_risk_counts(kmf, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)
-   
-        fig.tight_layout()
-        return fig
+        else:
+            kmf = KaplanMeierFitter()
+            event_observed = df.event.values
+            if event_flag == 0:
+                event_observed = 1 - event_observed
+            kmf.fit(durations=df.duration, event_observed=event_observed)
+            if color == 'gray': 
+                kmf.plot(show_censors=censor, ci_show=ci, color=color, 
+                        label='_nolegend_', censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
+            else:
+                kmf.plot(show_censors=censor, ci_show=ci, color=color[0], 
+                        label='_nolegend_', censor_styles={"marker": "|", "ms": 6, "mew": 0.75})
+            
+            plt.gca.legend_ = None
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)  
+            if at_risk:
+                add_at_risk_counts(kmf, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)
+    
+            fig.tight_layout()
+            return fig
 
 
 #-----------------------------------
@@ -231,3 +275,62 @@ def download_button(fig, filename):
     return href
 
 
+def color_sample(color):
+    return f'<span style="display:inline-block; width:12px; height:12px; margin-right:4px; border:1px solid #ccc; background-color:{color};"></span>'
+        
+
+def custom_color_and_style(subgroup: list):
+    colors = {
+        "Gray": "#808080",
+        "Navy Blue": "#000080",
+        "Forest Green": "#228B22",
+        "Crimson Red": "#DC143C",
+        "Goldenrod Yellow": "#DAA520",
+        "Royal Purple": "#7851A9",
+        "Teal": "#008080",
+        "Salmon Pink": "#FA8072",
+        "Slate Gray": "#708090",
+        "Orchid Purple": "#DA70D6",
+        "Olive Green": "#808000"
+    }
+    
+    # カラーサンプルをHTMLで生成する関数
+    def color_sample(color):
+        return f'<span style="display:inline-block; width:12px; height:12px; margin-right:4px; border:1px solid #ccc; background-color:{color};"></span>'
+
+    styles = {
+        # '&#8209;&#8209;&#8209;' # ラジオボタンではこちら
+        '---': 'solid', 
+        # '&#8209; &#8209;' # ラジオボタンではこちら
+        '- -': 'dashed', 
+        '-•-': 'dashdot', 
+        '•••': 'dotted'
+    }
+    style_key = list(styles.keys())
+    
+    output_color = []
+    output_style = []
+    
+    
+    with st.expander('色とスタイルの選択'):
+        # カラーサンプルを2行6列のグリッドで表示
+        color_names = list(colors.keys())
+        for i in range(0, len(color_names), 6):
+            cols = st.columns(6)
+            for col, color_name in zip(cols, color_names[i:i+6]):
+                col.markdown(f"<span style='display:inline-block; width:12px; height:12px; margin-right:4px; border:1px solid #ccc; background-color:{colors[color_name]};'></span> {color_name}", 
+                             unsafe_allow_html=True)
+        for group in subgroup:
+            st.write('---')
+            st.write(group)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                color_choice = st.selectbox(f'color:{group}', list(colors.keys()))
+            with col2:
+                style_choice = st.selectbox(f'style:{group}', style_key)
+
+            output_color.append(colors[color_choice])
+            output_style.append(styles[style_choice])
+    
+    return output_color, output_style

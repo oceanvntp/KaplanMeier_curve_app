@@ -11,7 +11,7 @@ import streamlit as st
 import sys
 from io import BytesIO
 import base64
-from utils import generate_grayscale, draw_km, median_duration, logrank_p_table, heighlight_value, hazard_table, download_button
+from utils import generate_grayscale, draw_km, median_duration, logrank_p_table, heighlight_value, hazard_table, download_button, custom_color_and_style
 
 
 
@@ -54,8 +54,8 @@ with col2:
 ##################################
 ##################################
 # サイドバー
-style = st.sidebar.selectbox('スタイル', ('グレースケール', 'グレー', 'NEJM', 'Lancet'))
-if style == 'グレースケール':
+color_style = st.sidebar.selectbox('スタイル', ('グレースケール', 'グレー', 'NEJM', 'Lancet', 'カスタム'))
+if color_style == 'グレースケール':
     if uploaded_file is not None:
         df = pd.read_excel(uploaded_file, header=0)
         df = df.fillna({'subgroup':'None'})
@@ -65,7 +65,10 @@ if style == 'グレースケール':
         df = df.fillna({'subgroup':'None'})
         color = generate_grayscale(len(set(df.subgroup)))
         
-elif style == 'グレー':
+    linestyle_choice = False
+
+        
+elif color_style == 'グレー':
     if uploaded_file is not None:
         df = pd.read_excel(uploaded_file, header=0)
         df = df.fillna({'subgroup':'None'})
@@ -73,11 +76,18 @@ elif style == 'グレー':
             st.sidebar.write('このスタイルは4群まで対応しています。')
         else:
             color = 'gray'
+    linestyle_choice = False
             
-elif style == 'NEJM':
+elif color_style == 'NEJM':
     color = nejm_cp
-elif style == 'Lancet':
+    linestyle_choice = False
+elif color_style == 'Lancet':
     color = lancet_cp
+    linestyle_choice = False
+elif color_style == 'カスタム':
+    linestyle_choice = True
+
+style_choice_list = None
     
 #-----------------------------------
 st.sidebar.write('---')
@@ -122,7 +132,7 @@ st.sidebar.write('---')
 fontsize = st.sidebar.slider('N at risk サイズ', min_value=8, max_value=14, value=11)
 #-----------------------------------   
 st.sidebar.write('---')
-fontname = st.sidebar.selectbox('N at risk　フォント', ('Arial', 'Times New Roman', 'Helvetica', 'Calibri'))
+fontname = st.sidebar.selectbox('N at risk　フォント', ('Arial', 'Times New Roman', 'Helvetica'))
 
 
 ##################################
@@ -131,10 +141,15 @@ if uploaded_file is not None:
     df = pd.read_excel(uploaded_file, header=0)
     df = df.dropna(subset=['duration', 'event'])
     df = df.fillna({'subgroup':'None'})
+    subgroup = list(set(df.subgroup))
+    if color_style=='カスタム':
+        color, linestyle = custom_color_and_style(subgroup)
+        style_choice_list = linestyle
     fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
-                  title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, 
-                  ci=ci, at_risk=at_risk, event_flag=event_flag,
-                  fontsize=fontsize, fontname=fontname)
+                    linestyle_choice=linestyle_choice, style_choice_list=style_choice_list,
+                title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, 
+                ci=ci, at_risk=at_risk, event_flag=event_flag,
+                fontsize=fontsize, fontname=fontname)
     st.pyplot(fig)
     # if st.button('ダウンロード'):
     st.markdown(download_button(fig, "km_curve"), unsafe_allow_html=True)
@@ -159,7 +174,12 @@ elif (uploaded_file is None):
     sample = st.checkbox('サンプル表示')
     if sample:
         df = pd.read_excel('sample_table/sampleExcel.xlsx', header=0)
+        subgroup = list(set(df.subgroup))
+        if color_style=='カスタム':
+            color, linestyle = custom_color_and_style(subgroup)
+            style_choice_list = linestyle
         fig = draw_km(df, color=color, size=size, by_subgroup=by_subgroup,
+                      linestyle_choice=linestyle_choice, style_choice_list=style_choice_list,
                     title=title, xlabel=xlabel, ylabel=ylabel, censor=censor, 
                     ci=ci, at_risk=at_risk, event_flag=event_flag,
                     fontsize=fontsize, fontname=fontname)
