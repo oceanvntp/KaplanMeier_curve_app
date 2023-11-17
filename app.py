@@ -141,7 +141,7 @@ if uploaded_file is not None:
     df = pd.read_excel(uploaded_file, header=0)
     df = df.dropna(subset=['duration', 'event'])
     df = df.fillna({'subgroup':'None'})
-    subgroup = list(set(df.subgroup))
+    subgroup = df.subgroup.unique()
     if color_style=='カスタム':
         color, linestyle = custom_color_and_style(subgroup)
         style_choice_list = linestyle
@@ -156,7 +156,7 @@ if uploaded_file is not None:
     
     st.text('●生存期間')
     st.table(median_duration(df, event_flag=event_flag))
-    subgroup = list(set(df.subgroup))
+    subgroup = df.subgroup.unique()
     if len(subgroup) >= 2:
         st.text('●Logrank/Wilcoxon検定')
         p_df = logrank_p_table(df, event_flag=event_flag)
@@ -174,7 +174,7 @@ elif (uploaded_file is None):
     sample = st.checkbox('サンプル表示')
     if sample:
         df = pd.read_excel('sample_table/sampleExcel.xlsx', header=0)
-        subgroup = list(set(df.subgroup))
+        subgroup = df.subgroup.unique()
         if color_style=='カスタム':
             color, linestyle = custom_color_and_style(subgroup)
             style_choice_list = linestyle
