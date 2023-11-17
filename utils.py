@@ -36,7 +36,6 @@ def generate_grayscale(x, white_value=0.8): #一番薄い色を変更すると�
 # カプランマイヤー曲線表示関数
 
 
-
 def draw_km(df:pd.DataFrame, color:str or list='gray', 
             linestyle_choice=False, style_choice_list=None, size=(8, 4), by_subgroup:bool=True, 
             title:str='Kaplan Meier Curve', xlabel:str='生存日数', ylabel='生存率', 
@@ -49,7 +48,8 @@ def draw_km(df:pd.DataFrame, color:str or list='gray',
         df: データ元のデータフレーム
     '''
     
-    subgroup = list(set(df.subgroup))
+    subgroup = df.subgroup.unique()
+    
     fig, ax = plt.subplots(figsize=size, dpi=300)
     plt.suptitle(title)
     
