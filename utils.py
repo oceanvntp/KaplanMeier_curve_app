@@ -52,6 +52,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray',
     
     fig, ax = plt.subplots(figsize=size, dpi=300)
     plt.suptitle(title)
+    ylim = (0, 1.05)
     
     kmfs = [] # at_riskを正しく表示するため、fitしたインスタンスをリストに格納する
     if linestyle_choice:
@@ -70,6 +71,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray',
             
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
+            plt.ylim(ylim)
             if at_risk:
                 add_at_risk_counts(*kmfs, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)  # * でリストの中身を展開
 
@@ -89,6 +91,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray',
             plt.gca.legend_ = None
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)  
+            plt.ylim(ylim)
             if at_risk:
                 add_at_risk_counts(kmf, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)
     
@@ -115,6 +118,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray',
             
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
+            plt.ylim(ylim)
             if at_risk:
                 add_at_risk_counts(*kmfs, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)  # * でリストの中身を展開
 
@@ -138,6 +142,7 @@ def draw_km(df:pd.DataFrame, color:str or list='gray',
             plt.gca.legend_ = None
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)  
+            plt.ylim(ylim)
             if at_risk:
                 add_at_risk_counts(kmf, rows_to_show=['At risk'], fontsize=fontsize, fontname=fontname)
     
