@@ -139,6 +139,7 @@ fontname = st.sidebar.selectbox('N at risk　フォント', ('Arial', 'Times New
 # ファイルアップロード後の処理
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file, header=0)
+    df['subgroup'] = df['subgroup'].astype(str)
     df = df.dropna(subset=['duration', 'event'])
     df = df.fillna({'subgroup':'None'})
     subgroup = df.subgroup.unique()
